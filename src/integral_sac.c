@@ -32,7 +32,7 @@ static void usage( void );
 /* */
 static float   GainFactor = 1.0;
 static char   *InputFile  = NULL;
-static FILE   *OutputFP   = NULL;
+static char   *OutputFile = NULL;
 static uint8_t FilterFlag = HP_FILTER_OFF;
 
 /*
@@ -41,14 +41,16 @@ static uint8_t FilterFlag = HP_FILTER_OFF;
 int main( int argc, char **argv )
 {
 	int      i, npts, datalen;
-	float   *seis_raw;
-	float   *seis_proc;
+	int      result    = -1;
+	FILE    *ofp       = stdout;
+	uint8_t *outbuf    = NULL;
+	float   *seis_raw  = NULL;
+	float   *seis_proc = NULL;
 	float    acc0, vel0;
-	uint8_t *outbuf = NULL;
 
 	struct SAChead sh;
 	IIR_FILTER     filter;
-	IIR_STAGE     *stage;
+	IIR_STAGE     *stage = NULL;
 
 /* */
 	if ( proc_argv( argc, argv ) ) {
@@ -57,11 +59,10 @@ int main( int argc, char **argv )
 	}
 /* */
 	if ( sac_proc_sac_load( InputFile, &sh, &seis_raw ) < 0 )
-		return -1;
+		goto end_process;
 	if ( sh.delta < 0.001 ) {
 		fprintf(stderr, "SAC file: %s sample delta too small: %f\n", InputFile, sh.delta);
-		free(seis_raw);
-		return -1;
+		goto end_process;
 	}
 /* For Recursive Filter high pass 2 poles at 0.075 Hz */
 	filter = designfilter( 2, IIR_HIGHPASS_FILTER, IIR_BUTTERWORTH, 0.075, 0.0, sh.delta );
@@ -98,22 +99,32 @@ int main( int argc, char **argv )
 			seis_proc[i] = applyfilter( seis_proc[i], &filter, stage );
 	}
 /* */
-	i = 0;
+	if ( OutputFile && (ofp = fopen(OutputFile, "wb")) == (FILE *)NULL ) {
+		fprintf(stderr, "ERROR!! Can't open %s for output! Exiting!\n", OutputFile);
+		exit(-1);
+	}
+/* */
 	datalen += sizeof(struct SAChead);
-	if ( fwrite(outbuf, 1, datalen, OutputFP) != datalen ) {
+	if ( fwrite(outbuf, 1, datalen, ofp) != datalen ) {
 		fprintf(stderr, "Error writing SAC file: %s\n", strerror(errno));
-		i = -1;
+		if ( OutputFile )
+			remove(OutputFile);
 	}
 	else {
 		fprintf(stderr, "SAC file: %s integration finished!\n", InputFile);
+		result = 0;
 	}
-/* */
-	fclose(OutputFP);
-	free(seis_raw);
-	free(outbuf);
-	free(stage);
 
-	return i;
+end_process:
+	fclose(ofp);
+	if ( seis_raw )
+		free(seis_raw);
+	if ( outbuf )
+		free(outbuf);
+	if ( stage )
+		free(stage);
+
+	return result;
 }
 
 /*
@@ -149,12 +160,12 @@ static int proc_argv( int argc, char *argv[] )
 			return -1;
 #else
 			InputFile = argv[i];
-			OutputFP  = stdout;
+			OutputFile = NULL;
 #endif
 		}
 		else if ( i == argc - 2 ) {
-			InputFile = argv[i];
-			i++;
+			InputFile = argv[i++];
+			OutputFile = argv[i];
 			break;
 		}
 		else {
@@ -167,13 +178,6 @@ static int proc_argv( int argc, char *argv[] )
 		fprintf(stderr, "No input file was specified; ");
 		fprintf(stderr, "exiting with error!\n\n");
 		return -1;
-	}
-/* */
-	if ( !OutputFP ) {
-		if ( (OutputFP = fopen(argv[i], "wb")) == (FILE *)NULL ) {
-			fprintf(stderr, "ERROR!! Can't open %s for output! Exiting!\n", argv[i]);
-			exit(-1);
-		}
 	}
 
 	return 0;

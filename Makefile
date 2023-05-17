@@ -36,7 +36,7 @@ install:
 	do \
 		cp ./$$x $(INSTALL_DIR); \
 	done
-	@echo Finish installing of $(MAIN_BIN_NAME).
+	@echo Finish installing of all programs!
 
 # Clean-up rules
 clean:

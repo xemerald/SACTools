@@ -25,9 +25,9 @@
 static int  proc_argv( int, char * [] );
 static void usage( void );
 /* */
-static float   GainFactor = 1.0;
-static char   *InputFile  = NULL;
-static FILE   *OutputFP   = NULL;
+static float GainFactor = 1.0;
+static char *InputFile  = NULL;
+static char *OutputFile = NULL;
 
 /*
  *
@@ -35,10 +35,11 @@ static FILE   *OutputFP   = NULL;
 int main( int argc, char **argv )
 {
 	struct SAChead sh;
-	uint8_t *outbuf;
-	float   *seis;
+	FILE    *ofp    = stdout;
+	uint8_t *outbuf = NULL;
+	float   *seis   = NULL;
+	int      result = -1;
 	int      datalen;
-	int      result = 0;
 
 /* */
 	if ( proc_argv( argc, argv ) ) {
@@ -46,8 +47,8 @@ int main( int argc, char **argv )
 		return -1;
 	}
 /* */
-	if ( sac_proc_sac_load( InputFile, &sh, &seis ) < 0)
-		return -1;
+	if ( sac_proc_sac_load( InputFile, &sh, &seis ) < 0 )
+		goto end_process;
 	fprintf(
 		stderr, "SAC file: %s start at %4.4d,%3.3d,%2.2d:%2.2d:%2.2d.%4.4d %f\n",
 		InputFile, sh.nzyear, sh.nzjday, sh.nzhour, sh.nzmin, sh.nzsec, sh.nzmsec, (double)sh.b + sac_proc_reftime_fetch( &sh )
@@ -60,18 +61,28 @@ int main( int argc, char **argv )
 	sac_proc_data_preprocess( seis, sh.npts, GainFactor );
 	memcpy(outbuf + sizeof(struct SAChead), seis, datalen);
 /* */
+	if ( OutputFile && (ofp = fopen(OutputFile, "wb")) == (FILE *)NULL ) {
+		fprintf(stderr, "ERROR!! Can't open %s for output! Exiting!\n", OutputFile);
+		goto end_process;
+	}
+/* */
 	datalen += sizeof(struct SAChead);
-	if ( fwrite(outbuf, 1, datalen, OutputFP) != datalen ) {
+	if ( fwrite(outbuf, 1, datalen, ofp) != datalen ) {
 		fprintf(stderr, "Error writing SAC file: %s\n", strerror(errno));
-		result = -1;
+		if ( OutputFile )
+			remove(OutputFile);
 	}
 	else {
 		fprintf(stderr, "SAC file: %s preprocessing finished!\n", InputFile);
+		result = 0;
 	}
-/* */
-	fclose(OutputFP);
-	free(seis);
-	free(outbuf);
+
+end_process:
+	fclose(ofp);
+	if ( seis )
+		free(seis);
+	if ( outbuf )
+		free(outbuf);
 
 	return result;
 }
@@ -103,12 +114,12 @@ static int proc_argv( int argc, char *argv[] )
 			return -1;
 #else
 			InputFile = argv[i];
-			OutputFP  = stdout;
+			OutputFile = NULL;
 #endif
 		}
 		else if ( i == argc - 2 ) {
-			InputFile = argv[i];
-			i++;
+			InputFile = argv[i++];
+			OutputFile = argv[i];
 			break;
 		}
 		else {
@@ -121,13 +132,6 @@ static int proc_argv( int argc, char *argv[] )
 		fprintf(stderr, "No input file was specified; ");
 		fprintf(stderr, "exiting with error!\n\n");
 		return -1;
-	}
-/* */
-	if ( !OutputFP ) {
-		if ( (OutputFP = fopen(argv[i], "wb")) == (FILE *)NULL ) {
-			fprintf(stderr, "ERROR!! Can't open %s for output! Exiting!\n", argv[i]);
-			exit(-1);
-		}
 	}
 
 	return 0;

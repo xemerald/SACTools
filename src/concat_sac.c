@@ -28,9 +28,9 @@
 static int  proc_argv( int , char * [] );
 static void usage( void );
 /* */
-static char   *InputFile1 = NULL;
-static char   *InputFile2 = NULL;
-static FILE   *OutputFP   = NULL;
+static char *InputFile1 = NULL;
+static char *InputFile2 = NULL;
+static char *OutputFile = NULL;
 
 /*
  *
@@ -38,12 +38,13 @@ static FILE   *OutputFP   = NULL;
 int main( int argc, char **argv )
 {
 	struct SAChead sh0, sh1;
+	FILE          *ofp   = stdout;
 	float         *seis0 = NULL;
 	float         *seis1 = NULL;
 	float         *gapseis = NULL;
 	double         starttime0, starttime1;
 	double         gaptime;
-	int            gapsamp = 0;
+	long           gapsamp = 0;
 	int            _sh0samp = 0;
 	int            result = -1;
 
@@ -78,8 +79,8 @@ int main( int argc, char **argv )
 /* */
 	gaptime = starttime1 - (starttime0 + sh0.e) + sh0.delta * 0.1;
 	gapsamp = gaptime / sh1.delta - 1;
-	if ( gapsamp >= 0 && gapsamp < (int)(MAX_TOLERANCE_GAP_SEC / sh1.delta) ) {
-		fprintf(stderr, "Gap is %.3f seconds(total %d samples).\n", gaptime, gapsamp);
+	if ( gapsamp >= 0 && gapsamp < (long)(MAX_TOLERANCE_GAP_SEC / sh1.delta) ) {
+		fprintf(stderr, "Gap is %.3f seconds(total %ld samples).\n", gaptime, gapsamp);
 		fprintf(stderr, "Filling the gap with %.6f...\n", (double)SACUNDEF);
 		gapseis = (float *)calloc(gapsamp, sizeof(float));
 		for ( int i = 0; i < gapsamp; i++ )
@@ -90,36 +91,49 @@ int main( int argc, char **argv )
 		sh0.e += gaptime + sh1.e;
 
 	/* */
-		if ( fwrite(&sh0, 1, sizeof(struct SAChead), OutputFP) != sizeof(struct SAChead) ) {
-			fprintf(stderr, "Error writing SAC file: %s\n", strerror(errno));
+		if ( OutputFile && (ofp = fopen(OutputFile, "wb")) == (FILE *)NULL ) {
+			fprintf(stderr, "ERROR!! Can't open %s for output! Exiting!\n", OutputFile);
 			goto end_process;
 		}
 	/* */
-		if ( fwrite(seis0, sizeof(float), _sh0samp, OutputFP) != _sh0samp ) {
+		if ( fwrite(&sh0, 1, sizeof(struct SAChead), ofp) != sizeof(struct SAChead) ) {
 			fprintf(stderr, "Error writing SAC file: %s\n", strerror(errno));
+			if ( OutputFile )
+				remove(OutputFile);
 			goto end_process;
 		}
-		if ( fwrite(gapseis, sizeof(float), gapsamp, OutputFP) != gapsamp ) {
+	/* */
+		if ( fwrite(seis0, sizeof(float), _sh0samp, ofp) != _sh0samp ) {
 			fprintf(stderr, "Error writing SAC file: %s\n", strerror(errno));
+			if ( OutputFile )
+				remove(OutputFile);
 			goto end_process;
 		}
-		if ( fwrite(seis1, sizeof(float), sh1.npts, OutputFP) != sh1.npts ) {
+		if ( fwrite(gapseis, sizeof(float), gapsamp, ofp) != gapsamp ) {
 			fprintf(stderr, "Error writing SAC file: %s\n", strerror(errno));
+			if ( OutputFile )
+				remove(OutputFile);
+			goto end_process;
+		}
+		if ( fwrite(seis1, sizeof(float), sh1.npts, ofp) != sh1.npts ) {
+			fprintf(stderr, "Error writing SAC file: %s\n", strerror(errno));
+			if ( OutputFile )
+				remove(OutputFile);
 			goto end_process;
 		}
 	/* */
 		fprintf(stderr, "SAC files: %s & %s concatenating finished!\n", InputFile1, InputFile2);
 		result = 0;
 	}
-	else if ( gapsamp >= (int)(MAX_TOLERANCE_GAP_SEC / sh1.delta) ) {
+	else if ( gapsamp > 0 ) {
 		fprintf(stderr, "ERROR! There is a gap over %d sec. between two SAC files. Just exit!\n", MAX_TOLERANCE_GAP_SEC);
 	}
 	else {
-		fprintf(stderr, "ERROR! There is an overlap between two SAC files. Just exit!\n");
+		fprintf(stderr, "ERROR! There is an overlap (%ld samples) between two SAC files. Just exit!\n", labs(gapsamp));
 	}
 
 end_process:
-	fclose(OutputFP);
+	fclose(ofp);
 	if ( gapseis )
 		free(gapseis);
 	if ( seis0 )
@@ -154,13 +168,13 @@ static int proc_argv( int argc, char *argv[] )
 			return -1;
 #else
 			InputFile2 = argv[i];
-			OutputFP   = stdout;
+			OutputFile = NULL;
 #endif
 		}
 		else if ( i == argc - 2 || i == argc - 3 ) {
 			if ( InputFile1 ) {
-				InputFile2 = argv[i];
-				i++;
+				InputFile2 = argv[i++];
+				OutputFile = argv[i];
 				break;
 			}
 			else {
@@ -177,13 +191,6 @@ static int proc_argv( int argc, char *argv[] )
 		fprintf(stderr, "Lack of specified input file; ");
 		fprintf(stderr, "exiting with error!\n\n");
 		return -1;
-	}
-/* */
-	if ( !OutputFP ) {
-		if ( (OutputFP = fopen(argv[i], "wb")) == (FILE *)NULL ) {
-			fprintf(stderr, "ERROR!! Can't open %s for output! Exiting!\n", argv[i]);
-			exit(-1);
-		}
 	}
 
 	return 0;
