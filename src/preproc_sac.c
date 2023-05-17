@@ -49,9 +49,8 @@ int main( int argc, char **argv )
 	if ( sac_proc_sac_load( InputFile, &sh, &seis ) < 0)
 		return -1;
 	fprintf(
-		stderr, "%s SAC start at %4.4d,%3.3d,%2.2d:%2.2d:%2.2d.%4.4d %f\n",
-		sac_proc_scnl_print( &sh ),
-		sh.nzyear, sh.nzjday, sh.nzhour, sh.nzmin, sh.nzsec, sh.nzmsec, (double)sh.b + sac_proc_reftime_fetch( &sh )
+		stderr, "SAC file: %s start at %4.4d,%3.3d,%2.2d:%2.2d:%2.2d.%4.4d %f\n",
+		InputFile, sh.nzyear, sh.nzjday, sh.nzhour, sh.nzmin, sh.nzsec, sh.nzmsec, (double)sh.b + sac_proc_reftime_fetch( &sh )
 	);
 /* */
 	datalen = (int)sh.npts * sizeof(float);
@@ -63,11 +62,11 @@ int main( int argc, char **argv )
 /* */
 	datalen += sizeof(struct SAChead);
 	if ( fwrite(outbuf, 1, datalen, OutputFP) != datalen ) {
-		fprintf(stderr, "Error writing sacfile: %s\n", strerror(errno));
+		fprintf(stderr, "Error writing SAC file: %s\n", strerror(errno));
 		result = -1;
 	}
 	else {
-		fprintf(stderr, "%s SAC preprocessing finished!\n", sac_proc_scnl_print( &sh ) );
+		fprintf(stderr, "SAC file: %s preprocessing finished!\n", InputFile);
 	}
 /* */
 	fclose(OutputFP);
@@ -143,8 +142,8 @@ static void usage( void )
 	fprintf(stdout, "version: %s\n", VERSION);
 	fprintf(stdout, "author:  %s\n", AUTHOR);
 	fprintf(stdout, "***************************\n");
-	fprintf(stdout, "Usage: %s [options] <input sacfile> > <output sacfile>\n", PROG_NAME);
-	fprintf(stderr, "       or %s [options] <input sacfile> <output sacfile>\n\n", PROG_NAME);
+	fprintf(stdout, "Usage: %s [options] <input SAC file> > <output SAC file>\n", PROG_NAME);
+	fprintf(stderr, "       or %s [options] <input SAC file> <output SAC file>\n\n", PROG_NAME);
 	fprintf(stdout,
 		"*** Options ***\n"
 		" -v             Report program version\n"

@@ -43,6 +43,7 @@ int main( int argc, char **argv )
 	float         *seis = NULL;
 	int            size = 0;
 	int            result = -1;
+	char           orig_scnl[64] = { 0 };
 
 /* Check command line arguments */
 	if ( proc_argv( argc, argv ) ) {
@@ -54,21 +55,22 @@ int main( int argc, char **argv )
 	if ( (size = sac_proc_sac_load( InputFile, &sh, &seis )) < 0 )
 		goto end_process;
 /* */
+	strcpy(orig_scnl, sac_proc_scnl_print( &sh ));
 	sac_proc_scnl_modify( &sh, NewSta, NewChan, NewNet, NewLoc );
 	sac_proc_az_inc_modfify( &sh, SACUNDEF, SACUNDEF );
 /* */
 	if ( fwrite(&sh, 1, sizeof(struct SAChead), OutputFP) != sizeof(struct SAChead) ) {
-		fprintf(stderr, "Error writing sacfile: %s\n", strerror(errno));
+		fprintf(stderr, "Error writing SAC file: %s\n", strerror(errno));
 		goto end_process;
 	}
 /* */
 	size -= sizeof(struct SAChead);
 	if ( fwrite(seis, 1, size, OutputFP) != size ) {
-		fprintf(stderr, "Error writing sacfile: %s\n", strerror(errno));
+		fprintf(stderr, "Error writing SAC file: %s\n", strerror(errno));
 		goto end_process;
 	}
 /* */
-	fprintf(stderr, "%s SAC SCNL modification finished!\n", InputFile);
+	fprintf(stderr, "SAC file: %s SCNL has been modified (%s -> %s)!\n", InputFile, orig_scnl, sac_proc_scnl_print( &sh ));
 	result = 0;
 
 end_process:
@@ -130,7 +132,7 @@ static int proc_argv( int argc, char *argv[] )
 	}
 /* */
 	if ( !NewSta && !NewChan && !NewNet && !NewLoc ) {
-		fprintf(stderr, "No new SCNLs was specified; ");
+		fprintf(stderr, "No new SCNL was specified; ");
 		fprintf(stderr, "exiting with error!\n\n");
 		return -1;
 	}
@@ -160,8 +162,8 @@ static void usage( void )
 	fprintf(stdout, "version: %s\n", VERSION);
 	fprintf(stdout, "author:  %s\n", AUTHOR);
 	fprintf(stdout, "***************************\n");
-	fprintf(stdout, "Usage: %s [options] <input sacfile> > <output sacfile>\n", PROG_NAME);
-	fprintf(stderr, "       or %s [options] <input sacfile> <output sacfile>\n\n", PROG_NAME);
+	fprintf(stdout, "Usage: %s [options] <input SAC file> > <output SAC file>\n", PROG_NAME);
+	fprintf(stderr, "       or %s [options] <input SAC file> <output SAC file>\n\n", PROG_NAME);
 	fprintf(stdout,
 		"*** Options ***\n"
 		" -v               Report program version\n"

@@ -91,24 +91,24 @@ int main( int argc, char **argv )
 
 	/* */
 		if ( fwrite(&sh0, 1, sizeof(struct SAChead), OutputFP) != sizeof(struct SAChead) ) {
-			fprintf(stderr, "Error writing sacfile: %s\n", strerror(errno));
+			fprintf(stderr, "Error writing SAC file: %s\n", strerror(errno));
 			goto end_process;
 		}
 	/* */
 		if ( fwrite(seis0, sizeof(float), _sh0samp, OutputFP) != _sh0samp ) {
-			fprintf(stderr, "Error writing sacfile: %s\n", strerror(errno));
+			fprintf(stderr, "Error writing SAC file: %s\n", strerror(errno));
 			goto end_process;
 		}
 		if ( fwrite(gapseis, sizeof(float), gapsamp, OutputFP) != gapsamp ) {
-			fprintf(stderr, "Error writing sacfile: %s\n", strerror(errno));
+			fprintf(stderr, "Error writing SAC file: %s\n", strerror(errno));
 			goto end_process;
 		}
 		if ( fwrite(seis1, sizeof(float), sh1.npts, OutputFP) != sh1.npts ) {
-			fprintf(stderr, "Error writing sacfile: %s\n", strerror(errno));
+			fprintf(stderr, "Error writing SAC file: %s\n", strerror(errno));
 			goto end_process;
 		}
 	/* */
-		fprintf(stderr, "%s & %s SAC concatenating finished!\n", InputFile1, InputFile2);
+		fprintf(stderr, "SAC files: %s & %s concatenating finished!\n", InputFile1, InputFile2);
 		result = 0;
 	}
 	else if ( gapsamp >= (int)(MAX_TOLERANCE_GAP_SEC / sh1.delta) ) {
@@ -198,12 +198,12 @@ static void usage( void )
 	fprintf(stdout, "version: %s\n", VERSION);
 	fprintf(stdout, "author:  %s\n", AUTHOR);
 	fprintf(stdout, "***************************\n");
-	fprintf(stdout, "Usage: %s [options] <input sacfile 1> <input sacfile 2> > <output sacfile>\n", PROG_NAME);
-	fprintf(stderr, "       or %s [options] <input sacfile 1> <input sacfile 2> <output sacfile>\n\n", PROG_NAME);
+	fprintf(stdout, "Usage: %s [options] <input SAC file 1> <input SAC file 2> > <output SAC file>\n", PROG_NAME);
+	fprintf(stderr, "       or %s [options] <input SAC file 1> <input SAC file 2> <output SAC file>\n\n", PROG_NAME);
 	fprintf(stdout,
 		"*** Options ***\n"
-		" -v             Report program version\n"
-		" -h             Show this usage message\n"
+		" -v    Report program version\n"
+		" -h    Show this usage message\n"
 		"\n"
 		"This program will concatenate the two input SAC files together.\n"
 		"\n"
