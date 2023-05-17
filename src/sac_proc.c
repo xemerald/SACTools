@@ -91,21 +91,21 @@ struct SAChead *sac_proc_scnl_modify(
 /* Channel code */
 	if ( n_chan != NULL ) {
 		i = strlen(n_chan);
-		strncpy(sh->kcmpnm, n_chan, i >= K_LEN ? K_LEN : i);
+		memcpy(sh->kcmpnm, n_chan, i >= K_LEN ? K_LEN : i);
 		for ( ; i < K_LEN; i++ )
 			sh->kcmpnm[i] = ' ';
 	}
 /* Network code */
 	if ( n_net != NULL ) {
 		i = strlen(n_net);
-		strncpy(sh->knetwk, n_net, i >= K_LEN ? K_LEN : i);
+		memcpy(sh->knetwk, n_net, i >= K_LEN ? K_LEN : i);
 		for ( ; i < K_LEN; i++ )
 			sh->knetwk[i] = ' ';
 	}
 /* Location code */
 	if ( n_loc != NULL ) {
 		i = strlen(n_loc);
-		strncpy(sh->khole, n_loc, i >= K_LEN ? K_LEN : i);
+		memcpy(sh->khole, n_loc, i >= K_LEN ? K_LEN : i);
 		for ( ; i < K_LEN; i++ )
 			sh->khole[i] = ' ';
 	}
