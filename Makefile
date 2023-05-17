@@ -3,9 +3,15 @@
 #
 CFLAG = /usr/bin/gcc -Wall -O3 -flto -g -I./include
 SRC = ./src
-#UTILITY = $(SRC)/iirfilter.o $(SRC)/picker_wu.o $(SRC)/sac_proc.o
+INSTALL_DIR = /usr/local/bin
+#
+PROGS = \
+	scnl_mod_sac \
+	concat_sac \
+	preproc_sac \
+	integral_sac
 
-all: scnl_mod_sac concat_sac preproc_sac integral_sac
+all: $(PROGS)
 
 scnl_mod_sac: $(SRC)/scnl_mod_sac.o $(SRC)/sac_proc.o
 	$(CFLAG) -o $@ $(SRC)/scnl_mod_sac.o $(SRC)/sac_proc.o
@@ -22,6 +28,15 @@ integral_sac: $(SRC)/integral_sac.o $(SRC)/sac_proc.o $(SRC)/iirfilter.o
 # Compile rule for Object
 %.o:%.c
 	$(CFLAG) -c $< -o $@
+
+#
+install:
+	@echo Installing to $(INSTALL_DIR)...
+	@for x in $(PROGS) ; \
+	do \
+		cp ./$$x $(INSTALL_DIR); \
+	done
+	@echo Finish installing of $(MAIN_BIN_NAME).
 
 # Clean-up rules
 clean:

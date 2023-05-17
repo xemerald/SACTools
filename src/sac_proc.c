@@ -82,26 +82,30 @@ struct SAChead *sac_proc_scnl_modify(
 	int i;
 
 /* Station name */
-	if ( n_sta != NULL && (i = strlen(n_sta)) <= K_LEN ) {
-		strncpy(sh->kstnm, n_sta, i);
+	if ( n_sta != NULL ) {
+		i = strlen(n_sta);
+		memcpy(sh->kstnm, n_sta, i >= K_LEN ? K_LEN : i);
 		for ( ; i < K_LEN; i++ )
 			sh->kstnm[i] = ' ';
 	}
 /* Channel code */
-	if ( n_chan != NULL && (i = strlen(n_chan)) <= K_LEN ) {
-		strncpy(sh->kcmpnm, n_chan, i);
+	if ( n_chan != NULL ) {
+		i = strlen(n_chan);
+		strncpy(sh->kcmpnm, n_chan, i >= K_LEN ? K_LEN : i);
 		for ( ; i < K_LEN; i++ )
 			sh->kcmpnm[i] = ' ';
 	}
 /* Network code */
-	if ( n_net != NULL && (i = strlen(n_net)) <= K_LEN ) {
-		strncpy(sh->knetwk, n_net, i);
+	if ( n_net != NULL ) {
+		i = strlen(n_net);
+		strncpy(sh->knetwk, n_net, i >= K_LEN ? K_LEN : i);
 		for ( ; i < K_LEN; i++ )
 			sh->knetwk[i] = ' ';
 	}
 /* Location code */
-	if ( n_loc != NULL && (i = strlen(n_loc)) <= K_LEN ) {
-		strncpy(sh->khole, n_loc, i);
+	if ( n_loc != NULL ) {
+		i = strlen(n_loc);
+		strncpy(sh->khole, n_loc, i >= K_LEN ? K_LEN : i);
 		for ( ; i < K_LEN; i++ )
 			sh->khole[i] = ' ';
 	}
