@@ -19,7 +19,7 @@ CURRENT_LINE=1
 while read line
 do
 	# Calculate the progress in percentage
-	percent=`echo ${CURRENT_LINE} ${TOTAL_LINE} | awk '{printf "%.2f", ($1/$2)}'`
+	percent=`echo ${CURRENT_LINE} ${TOTAL_LINE} | awk '{printf "%.2f", ($1/$2*100.0)}'`
 	line_a=(${line})
 	arcfile=${line_a[0]}
 	arcfile=${arcfile//[[:space:]]/}
