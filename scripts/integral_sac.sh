@@ -3,7 +3,7 @@
 #
 if [ $# -ne 2 ]
 then
-	echo "Usage: concat_cwb_sac.sh <Directory Path> <SCNL Info>"
+	echo "Usage: integral_sac.sh <Directory Path> <SCNL Info>"
 	exit 0
 fi
 echo "Creating the folder to store the coverted files..."

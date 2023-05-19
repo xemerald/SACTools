@@ -9,7 +9,7 @@ RES_DIR=${WORKING_DIR}/data_res
 #
 if [ $# -ne 2 ]
 then
-	echo "Usage: chan_mod_monthy.sh <Year> <Month>"
+	echo "Usage: HH_to_HL_monthly.sh <Year> <Month>"
 	exit 0
 fi
 
@@ -30,7 +30,7 @@ do
 		#echo "Decompressing the archived SAC files..."
 		#tar -C ${TMP_DIR} -vjxf ${TMP_DIR}/${SAC_DIR}
 		#rm -f ${TMP_DIR}/${SAC_DIR}
-		chan_mod_dir.sh ${TMP_DIR}/${dir}
+		HH_to_HL.sh ${TMP_DIR}/${dir}
 		#
 		echo "Compressing all archived SAC files..."
 		cd ${TMP_DIR}; tar -vjcf ${dir}.tar.bz2 ${dir}; cd -

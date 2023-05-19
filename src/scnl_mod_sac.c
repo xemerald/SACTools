@@ -31,6 +31,8 @@ static char *NewSta     = NULL;
 static char *NewChan    = NULL;
 static char *NewNet     = NULL;
 static char *NewLoc     = NULL;
+static char *NewCompAz  = NULL;
+static char *NewCompInc = NULL;
 
 /*
  *
@@ -56,7 +58,7 @@ int main( int argc, char **argv )
 /* */
 	strcpy(orig_scnl, sac_proc_scnl_print( &sh ));
 	sac_proc_scnl_modify( &sh, NewSta, NewChan, NewNet, NewLoc );
-	sac_proc_az_inc_modfify( &sh, SACUNDEF, SACUNDEF );
+	sac_proc_az_inc_modfify( &sh, NewCompAz ? atof(NewCompAz) : SACUNDEF, NewCompInc ? atof(NewCompInc) : SACUNDEF );
 /* */
 	if ( OutputFile && (ofp = fopen(OutputFile, "wb")) == (FILE *)NULL ) {
 		fprintf(stderr, "ERROR!! Can't open %s for output! Exiting!\n", OutputFile);
@@ -119,6 +121,12 @@ static int proc_argv( int argc, char *argv[] )
 		else if ( !strcmp(argv[i], "-l") ) {
 			NewLoc = argv[++i];
 		}
+		else if ( !strcmp(argv[i], "-ca") ) {
+			NewCompAz = argv[++i];
+		}
+		else if ( !strcmp(argv[i], "-ci") ) {
+			NewCompInc = argv[++i];
+		}
 		else if ( i == argc - 1 ) {
 #ifdef _WINNT
 			usage();
@@ -173,6 +181,8 @@ static void usage( void )
 		" -c channel_code  Specify the new channel code, max length is 8\n"
 		" -n network_code  Specify the new network code, max length is 8\n"
 		" -l location_code Specify the new location code, max length is 8\n"
+		" -ca azimuth      Specify the new component azimuth in deg (0-360)\n"
+		" -ci inclination  Specify the new component inclination in deg(0-180)\n"
 		"\n"
 		"This program will change the SCNL of the input SAC file.\n"
 		"\n"
