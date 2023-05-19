@@ -19,22 +19,22 @@ CURRENT_LINE=1
 while read line
 do
 	# Calculate the progress in percentage
-	let PERCENT=(${CURRENT_LINE}*100/${TOTAL_LINE}*100)/100
+	percent=`echo ${CURRENT_LINE} ${TOTAL_LINE} | awk '{printf "%.2f", ($1/$2)}'`
 	line_a=(${line})
 	arcfile=${line_a[0]}
 	arcfile=${arcfile//[[:space:]]/}
 	filepath=${SRC_DIR}/EVENTS_NTU/${arcfile:0:6}
 	if [ ${arcfile} ] && [ -e "${filepath}/${arcfile}" ]; then
-		echo "[${PERCENT}%] Found the archived SAC file: ${arcfile}!"
-		echo "[${PERCENT}%] Start to process the SAC file: ${arcfile}..."
+		echo "[${percent}%] Found the archived SAC file: ${arcfile}!"
+		echo "[${percent}%] Start to process the SAC file: ${arcfile}..."
 		#
-		echo "[${PERCENT}%] Moving the archived SAC file to local..."
+		echo "[${percent}%] Moving the archived SAC file to local..."
 		cp -R ${filepath}/${arcfile} ${TMP_DIR}
-		echo "[${PERCENT}%] Decompressing the archived SAC files..."
+		echo "[${percent}%] Decompressing the archived SAC files..."
 		lbzip2 -dc ${TMP_DIR}/${arcfile} | tar -C ${TMP_DIR} -x
 		rm -f ${TMP_DIR}/${arcfile}
 		#
-		echo "[${PERCENT}%] Exchanging the Z & E components of those stations on the list..."
+		echo "[${percent}%] Exchanging the Z & E components of those stations on the list..."
 		arcfolder=${TMP_DIR}/${arcfile:0:19}
 		stations=${line_a[@]:1}
 		for station in ${stations}
@@ -54,17 +54,17 @@ do
 			fi
 		done
 		#
-		echo "[${PERCENT}%] Compressing all the archived SAC files..."
+		echo "[${percent}%] Compressing all the archived SAC files..."
 		cd ${TMP_DIR} 1> /dev/null; tar -cf ${arcfile} --use-compress-program=lbzip2 ${arcfile:0:19}; cd - 1> /dev/null
 		mv ${TMP_DIR}/${arcfile} ${RES_DIR}
 		#
-		echo "[${PERCENT}%] Deleting the temporary folder..."
+		echo "[${percent}%] Deleting the temporary folder..."
 		rm -rf ${arcfolder}
-		echo "[${PERCENT}%] Finish process the archived SAC file: ${arcfile}!"
+		echo "[${percent}%] Finish process the archived SAC file: ${arcfile}!"
 	else
-		echo "[${PERCENT}%] Can't find the archived SAC file: '${arcfile}'!"
+		echo "[${percent}%] Can't find the archived SAC file: '${arcfile}'!"
 	fi
 	CURRENT_LINE=$((${CURRENT_LINE} + 1))
 done < ${INPUT_LIST}
-echo "[${PERCENT}%] Finish process all the archived SAC files on the list!"
+echo "[100.00%] Finish process all the archived SAC files on the list!"
 exit 0
