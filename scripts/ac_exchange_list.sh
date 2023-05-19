@@ -1,16 +1,38 @@
 #!/bin/bash
 #
 #
+BAR_SIZE=40
+BAR_CHAR_DONE="#"
+BAR_CHAR_TODO="-"
+PERCENTAGE_SCALE=2
+#
+function show_progress {
+	# Calculate the progress in percentage
+	PERCENT=$(bc <<< "scale=${PERCENTAGE_SCALE}; 100 * ${1} / ${2}")
+	# The number of done and todo characters
+	DONE=$(bc <<< "scale=0; ${BAR_SIZE} * ${PERCENT} / 100")
+	TODO=$(bc <<< "scale=0; ${BAR_SIZE} - ${DONE}")
+	# Build the done and todo sub-bars
+	DONE_BAR=$(printf "%${DONE}s" | tr " " "${BAR_CHAR_DONE}")
+	TODO_BAR=$(printf "%${TODO}s" | tr " " "${BAR_CHAR_TODO}")
+
+	# Output the bar
+	echo -ne "\rProgress : [${DONE_BAR}${TODO_BAR}] ${PERCENT}%"
+}
+#
+if [ $# -ne 1 ]
+then
+	echo "Usage: ac_exchange_list.sh <Input list>"
+	exit 0
+fi
+#
+INPUT_LIST=${1}
+TOTAL_LINE=`cat ${INPUT_LIST} | wc -l`
+CURRENT_LINE=1
 WORKING_DIR=/root/working
 TMP_DIR=${WORKING_DIR}/tmp
 SRC_DIR=${WORKING_DIR}/data_src
 RES_DIR=${WORKING_DIR}/archive_res
-#
-if [ ! -p /dev/stdin ]
-then
-	echo "Please input the list from STDIN!"
-	exit 0
-fi
 #
 while read line
 do
@@ -58,6 +80,8 @@ do
 	else
 		echo "Can't find the archived SAC file: '${arcfile}'!"
 	fi
-done
+	CURRENT_LINE=$((${CURRENT_LINE} + 1))
+	show_progress ${CURRENT_LINE} ${TOTAL_LINE}
+done < ${INPUT_LIST}
 echo "Finish process all the archived SAC files on the list!"
-exit
+exit 0
