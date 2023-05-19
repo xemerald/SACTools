@@ -25,7 +25,7 @@ do
 		echo "Moving the archived SAC file to local..."
 		cp -R ${filepath}/${arcfile} ${TMP_DIR}
 		echo "Decompressing the archived SAC files..."
-		pbzip2 -m500 -dc ${TMP_DIR}/${arcfile} | tar -C ${TMP_DIR} -x
+		lbzip2 -dc ${TMP_DIR}/${arcfile} | tar -C ${TMP_DIR} -x
 		rm -f ${TMP_DIR}/${arcfile}
 		#
 		echo "Exchanging the Z & E components of those stations on the list..."
@@ -49,7 +49,7 @@ do
 		done
 		#
 		echo "Compressing all the archived SAC files..."
-		cd ${TMP_DIR} 1> /dev/null; tar -cf ${arcfile} --use-compress-program=pbzip2 ${arcfile:0:19}; cd - 1> /dev/null
+		cd ${TMP_DIR} 1> /dev/null; tar -cf ${arcfile} --use-compress-program=lbzip2 ${arcfile:0:19}; cd - 1> /dev/null
 		mv ${TMP_DIR}/${arcfile} ${RES_DIR}
 		#
 		echo "Deleting the temporary folder..."
