@@ -20,13 +20,13 @@ do
 	filepath=${SRC_DIR}/EVENTS_NTU/${arcfile:0:6}
 	if [ ${arcfile} ] && [ -e "${filepath}/${arcfile}" ]; then
 		echo "Found the archived SAC file: ${arcfile}!"
-                echo "Start to process the SAC file: ${arcfile}..."
-                #
-                echo "Moving the archived SAC file to local..."
-                cp -R ${filepath}/${arcfile} ${TMP_DIR}
+		echo "Start to process the SAC file: ${arcfile}..."
+		#
+		echo "Moving the archived SAC file to local..."
+		cp -R ${filepath}/${arcfile} ${TMP_DIR}
 		echo "Decompressing the archived SAC files..."
 		pbzip2 -m500 -dc ${TMP_DIR}/${arcfile} | tar -C ${TMP_DIR} -x
-                rm -f ${TMP_DIR}/${arcfile}
+		rm -f ${TMP_DIR}/${arcfile}
 		#
 		echo "Exchanging the Z & E components of those stations on the list..."
 		arcfolder=${TMP_DIR}/${arcfile:0:19}
@@ -35,11 +35,16 @@ do
 		do
 			scnl_mod_sac -c HLE ${arcfolder}/${station}.HLZ.TW.-- ${arcfolder}/${station}.HLE.TW.--.temp
 			scnl_mod_sac -c HLZ ${arcfolder}/${station}.HLE.TW.-- ${arcfolder}/${station}.HLZ.TW.--.temp
+			#
 			if [ -e "${arcfolder}/${station}.HLZ.TW.--.temp" ]; then
 				mv ${arcfolder}/${station}.HLZ.TW.--.temp ${arcfolder}/${station}.HLZ.TW.--
+			else
+				rm -f ${arcfolder}/${station}.HLZ.TW.--
 			fi
 			if [ -e "${arcfolder}/${station}.HLE.TW.--.temp" ]; then
 				mv ${arcfolder}/${station}.HLE.TW.--.temp ${arcfolder}/${station}.HLE.TW.--
+			else
+				rm -f ${arcfolder}/${station}.HLE.TW.--
 			fi
 		done
 		#

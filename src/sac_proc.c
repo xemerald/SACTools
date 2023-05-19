@@ -255,19 +255,19 @@ static int read_sac_header( FILE *fp, struct SAChead *psh )
 static double fetch_sac_time( const struct SAChead *sh )
 {
 	struct tm tms;
-    double result;
+	double result;
 
-    tms.tm_year  = sh->nzyear - 1900;
-    tms.tm_mon   = 0;           /* Force the month to January */
-    tms.tm_mday  = sh->nzjday;  /* tm_mday is 1 - 31; nzjday is 1 - 366 */
-    tms.tm_hour  = sh->nzhour;
-    tms.tm_min   = sh->nzmin;
-    tms.tm_sec   = sh->nzsec;
-    tms.tm_isdst = 0;
-    result       = (double)timegm(&tms);
+	tms.tm_year  = sh->nzyear - 1900;
+	tms.tm_mon   = 0;           /* Force the month to January */
+	tms.tm_mday  = sh->nzjday;  /* tm_mday is 1 - 31; nzjday is 1 - 366 */
+	tms.tm_hour  = sh->nzhour;
+	tms.tm_min   = sh->nzmin;
+	tms.tm_sec   = sh->nzsec;
+	tms.tm_isdst = 0;
+	result       = (double)timegm(&tms);
 	result      += sh->nzmsec / 1000.0;
 
-    return result;
+	return result;
 }
 
 /*
