@@ -7,7 +7,7 @@ then
 	exit 0
 fi
 #
-QUERY="SELECT station, location, network, latitude, longitude, elevation, 'HLZ', 0.05981400, 'HLN', 0.05981400, 'HLE', 0.05981400 FROM ${4};"
+QUERY="SELECT station, location, network, latitude, longitude, elevation, 'HLZ', 0.05981400, 'HLN', 0.05981400, 'HLE', 0.05981400 FROM ${4} WHERE end_at > NOW();"
 #
 echo "Fetching the newest stations list from database..."
-echo ${QUERY} | mysql -u ${2} -p ${3} -h ${1} | awk '{print $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12}' > ${5}
+echo ${QUERY} | mysql -u ${2} -p ${3} -h ${1} -N | awk '{print $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12}' > ${5}
