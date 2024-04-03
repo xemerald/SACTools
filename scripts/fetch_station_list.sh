@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #
-if [ $# -ne 1 ]
+if [ $# -ne 5 ]
 then
 	echo "Usage: fetch_station_list.sh <DATABASE_HOST> <USER_NAME> <DATABASE_NAME> <TABLE_NAME> <OUTPUT_FILE>"
 	exit 0
