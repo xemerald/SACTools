@@ -1,14 +1,14 @@
-
 /**
- * @file preproc_sac.c
+ * @file sac_preproc.c
  * @author Benjamin Ming Yang (b98204032@gmail.com)
  * @brief
- * @version 1.0.0
- * @date 2023-05-16
+ * @version 1.0.1
+ * @date 2024-04-04
  *
  * @copyright Copyright (c) 2023
  *
  */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -16,10 +16,10 @@
 #include <errno.h>
 /* */
 #include <sachead.h>
-#include <sac_proc.h>
+#include <sac.h>
 /* */
-#define PROG_NAME       "preproc_sac"
-#define VERSION         "1.0.0 - 2023-05-16"
+#define PROG_NAME       "sac_preproc"
+#define VERSION         "1.0.1 - 2024-04-04"
 #define AUTHOR          "Benjamin Ming Yang"
 /* */
 static int  proc_argv( int, char * [] );
@@ -29,8 +29,12 @@ static float GainFactor = 1.0;
 static char *InputFile  = NULL;
 static char *OutputFile = NULL;
 
-/*
+/**
+ * @brief
  *
+ * @param argc
+ * @param argv
+ * @return int
  */
 int main( int argc, char **argv )
 {
@@ -41,31 +45,34 @@ int main( int argc, char **argv )
 	int      result = -1;
 	int      datalen;
 
-/* */
+/* Check command line arguments */
 	if ( proc_argv( argc, argv ) ) {
 		usage();
 		return -1;
 	}
-/* */
-	if ( sac_proc_sac_load( InputFile, &sh, &seis ) < 0 )
+
+/* Load the SAC file to local memory */
+	if ( sac_file_load( InputFile, &sh, &seis ) < 0 )
 		goto end_process;
 	fprintf(
 		stderr, "SAC file: %s start at %4.4d,%3.3d,%2.2d:%2.2d:%2.2d.%4.4d %f\n",
-		InputFile, sh.nzyear, sh.nzjday, sh.nzhour, sh.nzmin, sh.nzsec, sh.nzmsec, (double)sh.b + sac_proc_reftime_fetch( &sh )
+		InputFile, sh.nzyear, sh.nzjday, sh.nzhour, sh.nzmin, sh.nzsec, sh.nzmsec, (double)sh.b + sac_reftime_fetch( &sh )
 	);
-/* */
+/* Allocate the output buffer */
 	datalen = (int)sh.npts * sizeof(float);
 	outbuf  = malloc(sizeof(struct SAChead) + datalen);
 	memcpy(outbuf, (char *)&sh, sizeof(struct SAChead));
-/* */
-	sac_proc_data_preprocess( seis, sh.npts, GainFactor );
+
+/* The main process & copy the result to output buffer */
+	sac_data_preprocess( &sh, seis, GainFactor );
 	memcpy(outbuf + sizeof(struct SAChead), seis, datalen);
-/* */
+
+/* If user chose to output the result to local file, then open the file descript to write */
 	if ( OutputFile && (ofp = fopen(OutputFile, "wb")) == (FILE *)NULL ) {
 		fprintf(stderr, "ERROR!! Can't open %s for output! Exiting!\n", OutputFile);
 		goto end_process;
 	}
-/* */
+/* Real output block, write the output buffer to SAC file */
 	datalen += sizeof(struct SAChead);
 	if ( fwrite(outbuf, 1, datalen, ofp) != datalen ) {
 		fprintf(stderr, "Error writing SAC file: %s\n", strerror(errno));
@@ -78,7 +85,8 @@ int main( int argc, char **argv )
 	}
 
 end_process:
-	fclose(ofp);
+	if ( ofp != stdout )
+		fclose(ofp);
 	if ( seis )
 		free(seis);
 	if ( outbuf )
@@ -87,18 +95,21 @@ end_process:
 	return result;
 }
 
-/*
+/**
+ * @brief
  *
+ * @param argc
+ * @param argv
+ * @return int
  */
 static int proc_argv( int argc, char *argv[] )
 {
-	int i;
-
-	for ( i = 1; i < argc; i++ ) {
+	for ( int i = 1; i < argc; i++ ) {
 		if ( !strcmp(argv[i], "-v") ) {
 			fprintf(stdout, "%s\n", PROG_NAME);
-			fprintf(stdout, "version: %s\n", VERSION);
-			fprintf(stdout, "author:  %s\n", AUTHOR);
+			fprintf(stdout, "Version: %s\n", VERSION);
+			fprintf(stdout, "Author:  %s\n", AUTHOR);
+			fprintf(stdout, "Compiled at %s %s\n", __DATE__, __TIME__);
 			exit(0);
 		}
 		else if ( !strcmp(argv[i], "-h") ) {
@@ -137,17 +148,19 @@ static int proc_argv( int argc, char *argv[] )
 	return 0;
 }
 
-/*
+/**
+ * @brief
  *
  */
 static void usage( void )
 {
 	fprintf(stdout, "\n%s\n", PROG_NAME);
-	fprintf(stdout, "version: %s\n", VERSION);
-	fprintf(stdout, "author:  %s\n", AUTHOR);
+	fprintf(stdout, "Version: %s\n", VERSION);
+	fprintf(stdout, "Author:  %s\n", AUTHOR);
+	fprintf(stdout, "Compiled at %s %s\n", __DATE__, __TIME__);
 	fprintf(stdout, "***************************\n");
 	fprintf(stdout, "Usage: %s [options] <input SAC file> > <output SAC file>\n", PROG_NAME);
-	fprintf(stderr, "       or %s [options] <input SAC file> <output SAC file>\n\n", PROG_NAME);
+	fprintf(stdout, "       or %s [options] <input SAC file> <output SAC file>\n\n", PROG_NAME);
 	fprintf(stdout,
 		"*** Options ***\n"
 		" -v             Report program version\n"

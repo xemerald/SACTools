@@ -6,24 +6,24 @@ SRC = ./src
 INSTALL_DIR = /usr/local/bin
 #
 PROGS = \
-	scnl_mod_sac \
-	concat_sac \
-	preproc_sac \
-	integral_sac
+	sac_concat \
+	sac_int \
+	sac_mscnl \
+	sac_preproc
 
 all: $(PROGS)
 
-scnl_mod_sac: $(SRC)/scnl_mod_sac.o $(SRC)/sac_proc.o
-	$(CFLAG) -o $@ $(SRC)/scnl_mod_sac.o $(SRC)/sac_proc.o
+sac_mscnl: $(SRC)/sac_mscnl.o $(SRC)/sac.o
+	$(CFLAG) -o $@ $(SRC)/sac_mscnl.o $(SRC)/sac.o
 
-concat_sac: $(SRC)/concat_sac.o $(SRC)/sac_proc.o
-	$(CFLAG) -o $@ $(SRC)/concat_sac.o $(SRC)/sac_proc.o
+sac_concat: $(SRC)/sac_concat.o $(SRC)/sac.o
+	$(CFLAG) -o $@ $(SRC)/sac_concat.o $(SRC)/sac.o
 
-preproc_sac: $(SRC)/preproc_sac.o $(SRC)/sac_proc.o
-	$(CFLAG) -o $@ $(SRC)/preproc_sac.o $(SRC)/sac_proc.o
+sac_preproc: $(SRC)/sac_preproc.o $(SRC)/sac.o
+	$(CFLAG) -o $@ $(SRC)/sac_preproc.o $(SRC)/sac.o
 
-integral_sac: $(SRC)/integral_sac.o $(SRC)/sac_proc.o $(SRC)/iirfilter.o
-	$(CFLAG) -o $@ $(SRC)/integral_sac.o $(SRC)/sac_proc.o $(SRC)/iirfilter.o -lm
+sac_int: $(SRC)/sac_int.o $(SRC)/sac.o $(SRC)/iirfilter.o
+	$(CFLAG) -o $@ $(SRC)/sac_int.o $(SRC)/sac.o $(SRC)/iirfilter.o -lm
 
 # Compile rule for Object
 %.o:%.c

@@ -1,4 +1,11 @@
-/*
+/**
+ * @file sac.c
+ * @author Benjamin Ming Yang (b98204032@gmail.com)
+ * @brief
+ * @version 1.0.1
+ * @date 2024-04-05
+ *
+ * @copyright Copyright (c) 2024-now
  *
  */
 
@@ -14,19 +21,26 @@
 #include <float.h>
 /* */
 #include <sachead.h>
-#include <sac_proc.h>
+#include <sac.h>
 
 /*  */
 static int    read_sac_header( FILE *, struct SAChead * );
 static double fetch_sac_time( const struct SAChead * );
+static float  applygain_sac_data( float *, const int, const float );
 static float  dmean_sac_data( float *, const int, const float );
+static int    fillgap_sac_data( float *, const int, const float );
 static char  *trim_sac_string( char *, const int );
 static void   swap_order_4byte( void * );
 
-/*
+/**
+ * @brief
  *
+ * @param filename
+ * @param sh
+ * @param seis
+ * @return int
  */
-int sac_proc_sac_load( const char *filename, struct SAChead *sh, float **seis )
+int sac_file_load( const char *filename, struct SAChead *sh, float **seis )
 {
 	FILE  *fd;
 	float *_seis = NULL;
@@ -76,7 +90,7 @@ end_process:
  * @param n_loc
  * @return struct SAChead*
  */
-struct SAChead *sac_proc_scnl_modify(
+struct SAChead *sac_scnl_modify(
 	struct SAChead *sh, const char *n_sta, const char *n_chan, const char *n_net, const char *n_loc
 ) {
 	int i;
@@ -121,7 +135,7 @@ struct SAChead *sac_proc_scnl_modify(
  * @param inc
  * @return struct SAChead*
  */
-struct SAChead *sac_proc_az_inc_modfify( struct SAChead *sh, const float az, const float inc )
+struct SAChead *sac_az_inc_modify( struct SAChead *sh, const float az, const float inc )
 {
 /*
  * Orientation of seismometer - determine the orientation based on the third character
@@ -156,12 +170,15 @@ struct SAChead *sac_proc_az_inc_modfify( struct SAChead *sh, const float az, con
 	return sh;
 }
 
-/*
+/**
+ * @brief
  *
+ * @param sh
+ * @return const char*
  */
-const char *sac_proc_scnl_print( struct SAChead *sh )
+const char *sac_scnl_print( struct SAChead *sh )
 {
-	static char result[64] = { 0 };
+	static char result[SAC_MAX_SCNL_LENGTH] = { 0 };
 
 	char sta[K_LEN + 1]  = { 0 };
 	char chan[K_LEN + 1] = { 0 };
@@ -186,20 +203,33 @@ const char *sac_proc_scnl_print( struct SAChead *sh )
 	return result;
 }
 
-/*
+/**
+ * @brief
  *
+ * @param sh
+ * @return double
  */
-double sac_proc_reftime_fetch( struct SAChead *sh )
+double sac_reftime_fetch( struct SAChead *sh )
 {
 	return fetch_sac_time( sh );
 }
 
-/*
+/**
+ * @brief
  *
+ * @param sh
+ * @param seis
+ * @param gain_fac
+ * @return float*
  */
-float *sac_proc_data_preprocess( float *seis, const int npts, const float gain_fac )
+float *sac_data_preprocess( struct SAChead *sh, float *seis, const float gain_fac )
 {
-	dmean_sac_data( seis, npts, gain_fac );
+	applygain_sac_data( seis, sh->npts, gain_fac );
+	dmean_sac_data( seis, sh->npts, 1.0 / sh->delta );
+	fprintf(
+		stderr, "Found %d gaps within total %d samples in %s, filled with 0.0!\n",
+		fillgap_sac_data( seis, sh->npts, 0.0 ), sh->npts, sac_scnl_print( sh )
+	);
 
 	return seis;
 }
@@ -216,7 +246,6 @@ float *sac_proc_data_preprocess( float *seis, const int npts, const float gain_f
  */
 static int read_sac_header( FILE *fp, struct SAChead *psh )
 {
-	int i;
 	int filesize;
 	int result = 0;
 	struct SAChead2 *psh2;
@@ -236,9 +265,9 @@ static int read_sac_header( FILE *fp, struct SAChead *psh )
 	if ( filesize != (sizeof(struct SAChead) + (psh->npts * sizeof(float))) ) {
 		result = 1;
 		fprintf(stderr, "WARNING: Swapping is needed! (filesize %d, psh.npts %d)\n", filesize, psh->npts);
-		for ( i = 0; i < NUM_FLOAT; i++ )
+		for ( int i = 0; i < NUM_FLOAT; i++ )
 			swap_order_4byte( psh2->SACfloat + i );
-		for ( i = 0; i < MAXINT; i++ )
+		for ( int i = 0; i < MAXINT; i++ )
 			swap_order_4byte( psh2->SACint + i );
 		if ( filesize != (sizeof(struct SAChead) + (psh->npts * sizeof(float))) ) {
 			fprintf(stderr, "ERROR: Swapping is needed again! (filesize %d, psh.npts %d)\n", filesize, psh->npts);
@@ -249,8 +278,11 @@ static int read_sac_header( FILE *fp, struct SAChead *psh )
 	return result;
 }
 
-/*
+/**
+ * @brief
  *
+ * @param sh
+ * @return double
  */
 static double fetch_sac_time( const struct SAChead *sh )
 {
@@ -270,38 +302,79 @@ static double fetch_sac_time( const struct SAChead *sh )
 	return result;
 }
 
-/*
+/**
+ * @brief
  *
+ * @param input
+ * @param npts
+ * @param gain
+ * @return float
  */
-static float dmean_sac_data( float *input, const int npts, const float gain )
+static float applygain_sac_data( float *input, const int npts, const float gain )
 {
-	int   i, i_head;
-	int   gap_count = 0;
+/* */
+	for ( int i = 0; i < npts; i++ ) {
+		if ( input[i] != SACUNDEF )
+			input[i] *= gain;
+	}
+
+	return gain;
+}
+
+/**
+ * @brief
+ *
+ * @param input
+ * @param npts
+ * @param samprate
+ * @return float
+ */
+static float dmean_sac_data( float *input, const int npts, const float samprate )
+{
+	int   i_head;
+	int   mean_count = 0;
 	float mean = 0.0;
 
 /* */
 	i_head = (int)(npts * 0.1);
-	i_head = i_head ? i_head : npts;
-	for ( i = 0; i < npts; i++ ) {
-		if ( input[i] == SACUNDEF ) {
-			input[i] = 0.0;
-			if ( i < i_head )
-				gap_count++;
-			continue;
-		}
-		input[i] *= gain;
-		if ( i < i_head )
+	i_head = i_head >= (int)samprate ? i_head : npts;
+	for ( int i = 0; i < i_head; i++ ) {
+		if ( input[i] != SACUNDEF ) {
 			mean += input[i];
+			mean_count++;
+		}
 	}
-	mean /= (float)(i_head - gap_count);
+	mean /= mean_count;
 /* */
-	for ( i = 0; i < npts; i++ )
-		if ( input[i] != 0.0 )
+	for ( int i = 0; i < npts; i++ ) {
+		if ( input[i] != SACUNDEF )
 			input[i] -= mean;
-		else
-			input[i] = mean;
+	}
 
 	return mean;
+}
+
+/**
+ * @brief
+ *
+ * @param input
+ * @param npts
+ * @param fill
+ * @return int
+ */
+static int fillgap_sac_data( float *input, const int npts, const float fill )
+{
+	int gap_count = 0;
+
+/* */
+	for ( int i = 0; i < npts; i++ ) {
+		if ( input[i] == SACUNDEF ) {
+			input[i] = fill;
+			gap_count++;
+		}
+	}
+
+	return gap_count;
 }
 
 /**
@@ -338,14 +411,14 @@ static void swap_order_4byte( void *data )
 		uint8_t c[4];
 	} _data;
 
-	memcpy( &_data, data, sizeof(uint32_t) );
+	memcpy(&_data, data, sizeof(uint32_t));
 	temp       = _data.c[0];
 	_data.c[0] = _data.c[3];
 	_data.c[3] = temp;
 	temp       = _data.c[1];
 	_data.c[1] = _data.c[2];
 	_data.c[2] = temp;
-	memcpy( data, &_data, sizeof(uint32_t) );
+	memcpy(data, &_data, sizeof(uint32_t));
 
 	return;
 }

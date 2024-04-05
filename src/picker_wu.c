@@ -1,4 +1,11 @@
-/*
+/**
+ * @file picker_wu.c
+ * @author your name (you@domain.com)
+ * @brief
+ * @version 0.1
+ * @date 2024-04-04
+ *
+ * @copyright Copyright (c) 2024
  *
  */
 
@@ -13,8 +20,15 @@
 static inline double characteristic_func_1( const double );
 static inline double characteristic_func_2( const double, const double );
 
-/*
+/**
+ * @brief
  *
+ * @param input_z
+ * @param np
+ * @param delta
+ * @param cf_flag
+ * @param p_start
+ * @return int
  */
 int pickwu_p_arrival_pick(
 	const float *input_z, const int np, const double delta, const int cf_flag, const int p_start
@@ -101,8 +115,16 @@ int pickwu_p_arrival_pick(
 	return result;
 }
 
-/*
+/**
+ * @brief
  *
+ * @param input_n
+ * @param input_e
+ * @param np
+ * @param delta
+ * @param cf_flag
+ * @param p_arrival
+ * @return int
  */
 int pickwu_s_arrival_pick(
 	const float *input_n, const float *input_e, const int np,
@@ -211,8 +233,15 @@ int pickwu_s_arrival_pick(
 	return result;
 }
 
-/*
+/**
+ * @brief
  *
+ * @param input_z
+ * @param np
+ * @param delta
+ * @param p_arrival
+ * @param snr
+ * @return int
  */
 int pickwu_p_arrival_quality_calc(
 	const float *input_z, const int np, const double delta, const int p_arrival, double *snr
@@ -284,8 +313,16 @@ int pickwu_p_arrival_quality_calc(
 	return result;
 }
 
-/*
+/**
+ * @brief
  *
+ * @param input_n
+ * @param input_e
+ * @param np
+ * @param delta
+ * @param s_arrival
+ * @param snr
+ * @return int
  */
 int pickwu_s_arrival_quality_calc(
 	const float *input_n, const float *input_e, const int np, const double delta, const int s_arrival, double *snr
@@ -353,8 +390,14 @@ int pickwu_s_arrival_quality_calc(
 	return result;
 }
 
-/*
+/**
+ * @brief
  *
+ * @param input_z
+ * @param np
+ * @param delta
+ * @param p_arrival
+ * @return int
  */
 int pickwu_p_trigger_check( const float *input_z, const int np, const double delta, const int p_arrival )
 {
@@ -448,16 +491,23 @@ int pickwu_p_trigger_check( const float *input_z, const int np, const double del
 	return 1;
 }
 
-/*
+/**
+ * @brief
  *
+ * @param sample
+ * @return double
  */
 static inline double characteristic_func_1( const double sample )
 {
 	return sample * sample;
 }
 
-/*
+/**
+ * @brief
  *
+ * @param sample
+ * @param sample_prev
+ * @return double
  */
 static inline double characteristic_func_2( const double sample, const double sample_prev )
 {

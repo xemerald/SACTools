@@ -1,9 +1,9 @@
 /**
- * @file scnl_mod_sac.c
+ * @file sac_mscnl.c
  * @author Benjamin Ming Yang (b98204032@gmail.com)
  * @brief
- * @version 1.0.0
- * @date 2023-05-16
+ * @version 1.0.1
+ * @date 2024-04-04
  *
  * @copyright Copyright (c) 2023-now
  *
@@ -15,11 +15,11 @@
 #include <errno.h>
 /* */
 #include <sachead.h>
-#include <sac_proc.h>
+#include <sac.h>
 
 /* */
-#define PROG_NAME       "scnl_mod_sac"
-#define VERSION         "1.0.0 - 2023-05-16"
+#define PROG_NAME       "sac_mscnl"
+#define VERSION         "1.0.1 - 2024-04-04"
 #define AUTHOR          "Benjamin Ming Yang"
 /* */
 static int  proc_argv( int , char * [] );
@@ -34,8 +34,12 @@ static char *NewLoc     = NULL;
 static char *NewCompAz  = NULL;
 static char *NewCompInc = NULL;
 
-/*
+/**
+ * @brief
  *
+ * @param argc
+ * @param argv
+ * @return int
  */
 int main( int argc, char **argv )
 {
@@ -44,7 +48,7 @@ int main( int argc, char **argv )
 	FILE          *ofp  = stdout;
 	int            size = 0;
 	int            result = -1;
-	char           orig_scnl[64] = { 0 };
+	char           orig_scnl[SAC_MAX_SCNL_LENGTH] = { 0 };
 
 /* Check command line arguments */
 	if ( proc_argv( argc, argv ) ) {
@@ -52,26 +56,28 @@ int main( int argc, char **argv )
 		return -1;
 	}
 
-/* */
-	if ( (size = sac_proc_sac_load( InputFile, &sh, &seis )) < 0 )
+/* Load the SAC file to local memory */
+	if ( (size = sac_file_load( InputFile, &sh, &seis )) < 0 )
 		goto end_process;
-/* */
-	strcpy(orig_scnl, sac_proc_scnl_print( &sh ));
-	sac_proc_scnl_modify( &sh, NewSta, NewChan, NewNet, NewLoc );
-	sac_proc_az_inc_modfify( &sh, NewCompAz ? atof(NewCompAz) : SACUNDEF, NewCompInc ? atof(NewCompInc) : SACUNDEF );
-/* */
+
+/* The main process, include SCNL, azimuth & inclination modify */
+	strcpy(orig_scnl, sac_scnl_print( &sh ));
+	sac_scnl_modify( &sh, NewSta, NewChan, NewNet, NewLoc );
+	sac_az_inc_modify( &sh, NewCompAz ? atof(NewCompAz) : SACUNDEF, NewCompInc ? atof(NewCompInc) : SACUNDEF );
+
+/* If user chose to output the result to local file, then open the file descript to write */
 	if ( OutputFile && (ofp = fopen(OutputFile, "wb")) == (FILE *)NULL ) {
 		fprintf(stderr, "ERROR!! Can't open %s for output! Exiting!\n", OutputFile);
 		goto end_process;
 	}
-/* */
+/* Real output block, first write the header to SAC file */
 	if ( fwrite(&sh, 1, sizeof(struct SAChead), ofp) != sizeof(struct SAChead) ) {
 		fprintf(stderr, "Error writing SAC file: %s\n", strerror(errno));
 		if ( OutputFile )
 			remove(OutputFile);
 		goto end_process;
 	}
-/* */
+/* Then write the seismic data */
 	size -= sizeof(struct SAChead);
 	if ( fwrite(seis, 1, size, ofp) != size ) {
 		fprintf(stderr, "Error writing SAC file: %s\n", strerror(errno));
@@ -79,30 +85,34 @@ int main( int argc, char **argv )
 			remove(OutputFile);
 		goto end_process;
 	}
-/* */
-	fprintf(stderr, "SAC file: %s SCNL has been modified (%s -> %s)!\n", InputFile, orig_scnl, sac_proc_scnl_print( &sh ));
+/* Output the final result information */
+	fprintf(stderr, "SAC file: %s SCNL has been modified (%s -> %s)!\n", InputFile, orig_scnl, sac_scnl_print( &sh ));
 	result = 0;
 
 end_process:
-	fclose(ofp);
+	if ( ofp != stdout )
+		fclose(ofp);
 	if ( seis )
 		free(seis);
 
 	return result;
 }
 
-/*
+/**
+ * @brief
  *
+ * @param argc
+ * @param argv
+ * @return int
  */
 static int proc_argv( int argc, char *argv[] )
 {
-	int i;
-
-	for ( i = 1; i < argc; i++ ) {
+	for ( int i = 1; i < argc; i++ ) {
 		if ( !strcmp(argv[i], "-v") ) {
 			fprintf(stdout, "%s\n", PROG_NAME);
-			fprintf(stdout, "version: %s\n", VERSION);
-			fprintf(stdout, "author:  %s\n", AUTHOR);
+			fprintf(stdout, "Version: %s\n", VERSION);
+			fprintf(stdout, "Author:  %s\n", AUTHOR);
+			fprintf(stdout, "Compiled at %s %s\n", __DATE__, __TIME__);
 			exit(0);
 		}
 		else if ( !strcmp(argv[i], "-h") ) {
@@ -146,13 +156,13 @@ static int proc_argv( int argc, char *argv[] )
 			return -1;
 		}
 	}
-/* */
+/* Not any change defined */
 	if ( !NewSta && !NewChan && !NewNet && !NewLoc ) {
 		fprintf(stderr, "No new SCNL was specified; ");
 		fprintf(stderr, "exiting with error!\n\n");
 		return -1;
 	}
-/* */
+/* Not any input file */
 	if ( !InputFile ) {
 		fprintf(stderr, "No input file was specified; ");
 		fprintf(stderr, "exiting with error!\n\n");
@@ -162,17 +172,19 @@ static int proc_argv( int argc, char *argv[] )
 	return 0;
 }
 
-/*
+/**
+ * @brief
  *
  */
 static void usage( void )
 {
 	fprintf(stdout, "\n%s\n", PROG_NAME);
-	fprintf(stdout, "version: %s\n", VERSION);
-	fprintf(stdout, "author:  %s\n", AUTHOR);
+	fprintf(stdout, "Version: %s\n", VERSION);
+	fprintf(stdout, "Author:  %s\n", AUTHOR);
+	fprintf(stdout, "Compiled at %s %s\n", __DATE__, __TIME__);
 	fprintf(stdout, "***************************\n");
 	fprintf(stdout, "Usage: %s [options] <input SAC file> > <output SAC file>\n", PROG_NAME);
-	fprintf(stderr, "       or %s [options] <input SAC file> <output SAC file>\n\n", PROG_NAME);
+	fprintf(stdout, "       or %s [options] <input SAC file> <output SAC file>\n\n", PROG_NAME);
 	fprintf(stdout,
 		"*** Options ***\n"
 		" -v               Report program version\n"

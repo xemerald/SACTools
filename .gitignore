@@ -12,7 +12,8 @@
 .vscode
 
 # Ignore the execute files.
-*_sac
+sac_*
+!sac_*.c
 
 # Ignore testing data
 test
