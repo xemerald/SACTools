@@ -16,7 +16,7 @@ do
 	NETWORK=`echo ${file} | cut -d. -f3`
 	LOCATION=`echo ${file} | cut -d. -f4`
 	NEW_FILE=${STATION}.${NEW_CHAN}.${NETWORK}.${LOCATION}
-	scnl_mod_sac -c ${NEW_CHAN} ${1}/${file} ${1}/${NEW_FILE}
+	sac_mscnl -c ${NEW_CHAN} ${1}/${file} ${1}/${NEW_FILE}
 	rm -f ${1}/${file}
 done
 #

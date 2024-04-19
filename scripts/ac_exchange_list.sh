@@ -39,8 +39,8 @@ do
 		stations=${line_a[@]:1}
 		for station in ${stations}
 		do
-			scnl_mod_sac -c HLE ${arcfolder}/${station}.HLZ.TW.-- ${arcfolder}/${station}.HLE.TW.--.temp
-			scnl_mod_sac -c HLZ ${arcfolder}/${station}.HLE.TW.-- ${arcfolder}/${station}.HLZ.TW.--.temp
+			sac_mscnl -c HLE ${arcfolder}/${station}.HLZ.TW.-- ${arcfolder}/${station}.HLE.TW.--.temp
+			sac_mscnl -c HLZ ${arcfolder}/${station}.HLE.TW.-- ${arcfolder}/${station}.HLZ.TW.--.temp
 			#
 			if [ -e "${arcfolder}/${station}.HLZ.TW.--.temp" ]; then
 				mv ${arcfolder}/${station}.HLZ.TW.--.temp ${arcfolder}/${station}.HLZ.TW.--

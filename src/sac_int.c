@@ -51,7 +51,7 @@ int main( int argc, char **argv )
 	float   *seis_raw  = NULL;
 	float   *seis_proc = NULL;
 	float    half_delta;
-	float    acc0, vel0;
+	float    last_raw, last_proc;
 
 	struct SAChead sh;
 	IIR_FILTER     filter;
@@ -72,7 +72,7 @@ int main( int argc, char **argv )
 		goto end_process;
 	}
 /* For Recursive Filter high pass 2 poles at 0.075 Hz */
-	filter = designfilter( 2, IIR_HIGHPASS_FILTER, IIR_BUTTERWORTH, 0.075, 0.0, sh.delta );
+	filter = iirfilter_design( 2, IIR_HIGHPASS_FILTER, IIR_BUTTERWORTH, 0.075, 0.0, sh.delta );
 	stage  = (IIR_STAGE *)calloc(filter.nsects, sizeof(IIR_STAGE));
 	memset(stage, 0, sizeof(IIR_STAGE) * filter.nsects);
 
@@ -92,21 +92,21 @@ int main( int argc, char **argv )
 /* First, preprocess the raw seismic data */
 	sac_data_preprocess( &sh, seis_raw, GainFactor );
 /* Then, do the integration */
-	acc0 = 0.0;
-	vel0 = 0.0;
+	last_raw  = 0.0;
+	last_proc = 0.0;
 	for ( int i = 0; i < npts; i++ ) {
-		seis_proc[i] = (seis_raw[i] + acc0) * half_delta + vel0;
-		acc0  = seis_raw[i];
-		vel0  = seis_proc[i];
+		seis_proc[i] = (seis_raw[i] + last_raw) * half_delta + last_proc;
+		last_raw  = seis_raw[i];
+		last_proc = seis_proc[i];
 	/* First time, forward filtering */
 		if ( FilterFlag )
-			seis_proc[i] = applyfilter( seis_proc[i], &filter, stage );
+			seis_proc[i] = iirfilter_apply( seis_proc[i], &filter, stage );
 	}
 /* Second time, backward filtering if needed! */
 	if ( FilterFlag == HP_FILTER_ZP ) {
 		memset(stage, 0, sizeof(IIR_STAGE) * filter.nsects);
 		for ( int i = npts - 1; i >= 0; i-- )
-			seis_proc[i] = applyfilter( seis_proc[i], &filter, stage );
+			seis_proc[i] = iirfilter_apply( seis_proc[i], &filter, stage );
 	}
 
 /* If user chose to output the result to local file, then open the file descript to write */

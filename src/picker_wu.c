@@ -1,11 +1,11 @@
 /**
  * @file picker_wu.c
- * @author your name (you@domain.com)
+ * @author Benjamin Yang @ National Taiwan University (b98204032@gmail.com)
  * @brief
- * @version 0.1
- * @date 2024-04-04
+ * @version 1.0.1
+ * @date 2024-04-05
  *
- * @copyright Copyright (c) 2024
+ * @copyright Copyright (c) 2019-now
  *
  */
 
@@ -36,7 +36,7 @@ int pickwu_p_arrival_pick(
 	int   pos_trigger = 0;
 	int   pos_tmp     = 0;
 	int   result      = 0;
-	int   i, ilta, ista;
+	int   ilta, ista;
 	_Bool trigger = 0;
 
 	double sum, ratio;
@@ -50,7 +50,7 @@ int pickwu_p_arrival_pick(
 	pos_tmp = ista + 100;
 	if ( pos_tmp > np )
 		pos_tmp = np;
-	for ( i = 0; i < pos_tmp; i++ ) {
+	for ( int i = 0; i < pos_tmp; i++ ) {
 	/* */
 		switch ( cf_flag ) {
 		case 2: default:
@@ -65,7 +65,7 @@ int pickwu_p_arrival_pick(
 	x_lta = x_sta * 1.25;
 
 /* Start to detect P arrival, picking P arrival on V-component */
-	for ( i = pos_tmp; i < np; i++ ) {
+	for ( int i = pos_tmp; i < np; i++ ) {
 	/*  */
 		switch ( cf_flag ) {
 		case 2: default:
@@ -127,8 +127,7 @@ int pickwu_p_arrival_pick(
  * @return int
  */
 int pickwu_s_arrival_pick(
-	const float *input_n, const float *input_e, const int np,
-	const double delta, const int cf_flag, const int p_arrival
+	const float *input_n, const float *input_e, const int np, const double delta, const int cf_flag, const int p_arrival
 ) {
 	const int samprate = (int)(1.0 / delta);
 /*
@@ -139,7 +138,7 @@ int pickwu_s_arrival_pick(
 	int   pos_42sec   = pos_2sec + samprate * 40;
 	int   pos_trigger = 0;
 	int   result      = 0;
-	int   i, ilta, ista;
+	int   ilta, ista;
 	_Bool trigger = 0;
 
 	double sum, ratio;
@@ -160,7 +159,7 @@ int pickwu_s_arrival_pick(
 		return result;
 /* Using ISTA points to calculate initial STA */
 	sum = 0.0;
-	for ( i = pos_2sec; i < pos_2sec + ista; i++ ) {
+	for ( int i = pos_2sec; i < pos_2sec + ista; i++ ) {
 	/* */
 		switch ( cf_flag ) {
 		case 2: default:
@@ -178,7 +177,7 @@ int pickwu_s_arrival_pick(
 	x_lta = x_sta;
 
 /* Start to Pick S wave arrival */
-	for ( i = pos_2sec + ista; i < pos_42sec; i++ ) {
+	for ( int i = pos_2sec + ista; i < pos_42sec; i++ ) {
 	/*  */
 		switch ( cf_flag ) {
 		case 2: default:
@@ -246,7 +245,7 @@ int pickwu_s_arrival_pick(
 int pickwu_p_arrival_quality_calc(
 	const float *input_z, const int np, const double delta, const int p_arrival, double *snr
 ) {
-	int   i, tmp;
+	int   tmp;
 	int   result;
 	float sum0, sum1;
 
@@ -275,7 +274,7 @@ int pickwu_p_arrival_quality_calc(
 
 /* calculating sum of 1 sec amplitude square after P arrival */
 	sum0 = 0.0;
-	for ( i = p_arrival; i < tmp; i++ )
+	for ( int i = p_arrival; i < tmp; i++ )
 		sum0 += characteristic_func_1( input_z[i] );
 	sum0 /= (double)samprate;
 /* calculating sum of 1 sec amplitude square before P arrival */
@@ -283,7 +282,7 @@ int pickwu_p_arrival_quality_calc(
 	tmp = p_arrival - samprate;
 	if ( tmp < 0 )
 		tmp = 0;
-	for ( i = tmp; i < p_arrival; i++ )
+	for ( int i = tmp; i < p_arrival; i++ )
 		sum1 += characteristic_func_1( input_z[i] );
 	sum1 /= (double)(p_arrival - tmp);
 
@@ -327,7 +326,6 @@ int pickwu_p_arrival_quality_calc(
 int pickwu_s_arrival_quality_calc(
 	const float *input_n, const float *input_e, const int np, const double delta, const int s_arrival, double *snr
 ) {
-	int   i;
 	int   pos_tmp;
 	int   result;
 	float sum0, sum1;
@@ -355,12 +353,12 @@ int pickwu_s_arrival_quality_calc(
 /* calculating sum of 1 sec amplitude square after S arrival, using 2 horizontial component */
 	sum0 = 0.0;
 	pos_tmp = s_arrival + samprate;
-	for ( i = s_arrival; i < pos_tmp; i++ )
+	for ( int i = s_arrival; i < pos_tmp; i++ )
 		sum0 += characteristic_func_1( input_n[i] ) + characteristic_func_1( input_e[i] );
 	sum0 /= (double)samprate;
 /* calculating sum of 1 s amplitude square before S arrival, using 2 horizontial component */
 	sum1 = 0.0;
-	for ( i = s_arrival - samprate; i < s_arrival; i++ )
+	for ( int i = s_arrival - samprate; i < s_arrival; i++ )
 		sum1 += characteristic_func_1( input_n[i] ) + characteristic_func_1( input_e[i] );
 	sum1 /= (double)samprate;
 
@@ -401,7 +399,7 @@ int pickwu_s_arrival_quality_calc(
  */
 int pickwu_p_trigger_check( const float *input_z, const int np, const double delta, const int p_arrival )
 {
-	int   i, tmp;
+	int   tmp;
 	float ratio;
 	float sum0, sum1;
 
@@ -426,7 +424,7 @@ int pickwu_p_trigger_check( const float *input_z, const int np, const double del
 	tmp = p_arrival - samprate;
 	if ( tmp < 0 )
 		tmp = 0;
-	for ( i = tmp; i < p_arrival; i++ )
+	for ( int i = tmp; i < p_arrival; i++ )
 		sum0 += characteristic_func_1( input_z[i] );
 	sum0 /= (double)(p_arrival - tmp);
 /*
@@ -438,7 +436,7 @@ int pickwu_p_trigger_check( const float *input_z, const int np, const double del
 		return 0;
 /* calculating sum of 1 sec amplitude square after P arrival pass 2 sec */
 	sum1 = 0.0;
-	for ( i = p_arrival + samprate * 2; i < tmp; i++ )
+	for ( int i = p_arrival + samprate * 2; i < tmp; i++ )
 		sum1 += characteristic_func_1( input_z[i] );
 	sum1 /= (double)samprate;
 /*
@@ -467,7 +465,7 @@ int pickwu_p_trigger_check( const float *input_z, const int np, const double del
 
 /* Calculating mean after P arrival */
 	sum0 = 0.0;
-	for ( i = p_arrival; i < p_arrival + samprate; i++ )
+	for ( int i = p_arrival; i < p_arrival + samprate; i++ )
 		sum0 += input_z[i];
 	sum0 /= (double)samprate;
 /* Calculating mean 1 sec before P arrival */
@@ -476,7 +474,7 @@ int pickwu_p_trigger_check( const float *input_z, const int np, const double del
 	if ( tmp < 0 )
 		tmp = 0;
 /* Notice for ip_arr!!!! */
-	for ( i = tmp; i < p_arrival; i++ )
+	for ( int i = tmp; i < p_arrival; i++ )
 		sum1 += input_z[i];
 	sum1 /= (double)(p_arrival - tmp);
 /*

@@ -32,7 +32,7 @@ do
 			dirc=12
 		fi
 		factor=(`cat ${2} | grep ${STATION} | cut -d' ' -f${dirc}`)
-		./integral_sac -g ${factor} ${1}/${file} ${1}/${OUTPUT_DIR}/${file}
+		sac_int -fz -g ${factor} ${1}/${file} ${1}/${OUTPUT_DIR}/${file}
 	fi
 done
 #

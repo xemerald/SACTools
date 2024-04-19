@@ -26,7 +26,7 @@ do
 			do
 				if [ ${file} != ${samefile} ]
 				then
-					./concat_sac ${1}/${file} ${1}/${samefile} ${1}
+					sac_concat ${1}/${file} ${1}/${samefile} ${1}
 					rm -f ${1}/${samefile}
 					#echo ${samefile}
 				fi

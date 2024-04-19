@@ -7,7 +7,7 @@ then
 	exit 0
 fi
 echo "Creating the folder to store the coverted files..."
-OUTPUT_DIR="_preproced"
+OUTPUT_DIR="_preprocessed"
 mkdir -p ${1}/${OUTPUT_DIR}
 echo "Listing all the archived SAC files..."
 FILELIST=`cd ${1}; ls | grep TW`

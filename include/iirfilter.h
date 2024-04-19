@@ -2,8 +2,8 @@
  * @file iirfilter.h
  * @author Benjamin Yang @ National Taiwan University (b98204032@gmail.com)
  * @brief Header file for IIR filter related functions & data.
- * @version 0.1
- * @date 2019-01-15
+ * @version 1.0.1
+ * @date 2024-04-05
  *
  * @copyright Copyright (c) 2019-now
  *
@@ -76,5 +76,5 @@ typedef struct {
 } IIR_STAGE;
 
 /* Functions prototype */
-double applyfilter( const double, const IIR_FILTER *, IIR_STAGE * );
-IIR_FILTER designfilter( const int, const int, const int, const double, const double, const double );
+double iirfilter_apply( const double, const IIR_FILTER *, IIR_STAGE * );
+IIR_FILTER iirfilter_design( const int, const int, const int, const double, const double, const double );
